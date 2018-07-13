@@ -6,6 +6,7 @@
 
 class repl_new
 {
+public:
     // Overrides default new to always allocate replicated storage for instances of this class
     static void *
     operator new(std::size_t sz)
@@ -95,6 +96,9 @@ public:
         return *static_cast<T*>(mw_get_nth(this, n));
     }
 
+    // Default constructor
+    repl<T,8>() = default;
+
     // Wrapper constructor to copy T to each nodelet after running the requested constructor
     // Call T's constructor with forwarded args
     repl<T,8>(T x)
@@ -102,7 +106,7 @@ public:
         mw_replicated_init(reinterpret_cast<long*>(&val), reinterpret_cast<long>(x));
     }
 
-    operator T const ()
+    operator T& ()
     {
         return val;
     }
