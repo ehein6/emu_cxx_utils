@@ -7,6 +7,7 @@ extern "C" {
 #include "memoryweb_x86.h"
 #endif
 }
+#include <cinttypes>
 
 template<typename T>
 class emu_striped_array
@@ -16,6 +17,7 @@ private:
     long n;
     T * data;
 public:
+    typedef T value_type;
     emu_striped_array(long n) : n(n)
     {
         data = reinterpret_cast<T*>(mw_malloc1dlong(n));
