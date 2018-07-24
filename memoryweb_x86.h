@@ -1,12 +1,5 @@
-/*! \file memoryweb_x86
- \date March 15, 2018
- \author Eric Hein 
- \brief Header file for Emu memory web on x86
- */
-
 #ifndef _MEMORYWEB_H
 #define _MEMORYWEB_H
-
 
 #ifdef __cplusplus
 extern "C" {
@@ -18,16 +11,14 @@ extern "C" {
 
 // Mimic memoryweb behavior on x86
 // TODO eventually move this all to its own header file
-#define NODE_ID() (0L)
-#define NODELETS() (1L)
+#define NODE_ID() (0)
+#define NODELETS() (1)
 #define replicated
 #define PRIORITY(X) (63-__builtin_clzll(X))
 #define MIGRATE(X) ((void)X)
 // For emu, we declare spawned functions noinline to prevent variables from the parent
 // stack frame from being carried along. For x86, inlining is good.
 #define noinline
-
-#define starttiming()
 
 #include <sys/time.h>
 #define MEMORYWEB_X86_CLOCK_RATE (500L)
@@ -69,7 +60,6 @@ mw_malloc2d(size_t nelem, size_t sz)
     // We need an 8-byte pointer for each element, plus the array of elements
     size_t bytes = nelem * sizeof(long) + nelem * sz;
     unsigned char ** ptrs = (unsigned char **)malloc(bytes);
-    if (ptrs == NULL) return NULL;
     // Skip past the pointers to get to the raw array
     unsigned char * data = (unsigned char *)ptrs + nelem * sizeof(long);
     // Assign pointer to each element
@@ -77,13 +67,6 @@ mw_malloc2d(size_t nelem, size_t sz)
         ptrs[i] = data + i * sz;
     }
     return ptrs;
-}
-
-static inline void *
-mw_arrayindex(long * array2d, unsigned long i, unsigned long numelements, size_t eltsize)
-{
-    unsigned char ** array = (unsigned char**) array2d;
-    return &array[i][0];
 }
 
 static inline void *
@@ -112,9 +95,6 @@ mw_free(void * ptr)
 }
 
 #define ATOMIC_ADDMS(PTR, VAL) __sync_fetch_and_add(PTR, VAL)
-#define ATOMIC_ANDMS(PTR, VAL) __sync_fetch_and_and(PTR, VAL)
-#define ATOMIC_ORMS(PTR, VAL) __sync_fetch_and_or(PTR, VAL)
-#define ATOMIC_XORMS(PTR, VAL) __sync_fetch_and_xor(PTR, VAL)
 
 static inline long
 ATOMIC_CAS(volatile long * ptr, long newval, long oldval) {
@@ -144,12 +124,6 @@ ATOMIC_MINMS(volatile long * ptr, long value) {
 static inline void
 REMOTE_ADD(volatile long * ptr, long value) { ATOMIC_ADDMS(ptr, value); }
 static inline void
-REMOTE_AND(volatile long * ptr, long value) { ATOMIC_ANDMS(ptr, value); }
-static inline void
-REMOTE_OR(volatile long * ptr, long value) { ATOMIC_ORMS(ptr, value); }
-static inline void
-REMOTE_XOR(volatile long * ptr, long value) { ATOMIC_XORMS(ptr, value); }
-static inline void
 REMOTE_MAX(volatile long * ptr, long value) { ATOMIC_MAXMS(ptr, value); }
 static inline void
 REMOTE_MIN(volatile long * ptr, long value) { ATOMIC_MINMS(ptr, value); }
@@ -158,4 +132,4 @@ REMOTE_MIN(volatile long * ptr, long value) { ATOMIC_MINMS(ptr, value); }
 }
 #endif
 
-#endif
+#endif // _MEMORYWEB_H
