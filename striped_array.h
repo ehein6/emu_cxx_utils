@@ -12,6 +12,7 @@ extern "C" {
 #include <cmath>
 #include <cstdlib>
 #include <cstdio>
+#include <cilk/cilk.h>
 
 namespace emu {
 

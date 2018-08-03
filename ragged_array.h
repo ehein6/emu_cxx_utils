@@ -73,6 +73,9 @@ protected:
     }
 
 public:
+
+    ragged_array() = default;
+
     // Shallow copy constructor
     ragged_array(const ragged_array& other, bool)
     : offsets(other.offsets, true), items(other.items, true) {}
@@ -127,6 +130,7 @@ public:
             self_type operator++() { pos += NODELETS(); return *this; }
             reference operator*() { return *pos; }
             pointer operator->() { return pos; }
+            operator pointer() { return pos; }
 
             bool operator==(const self_type& rhs) { return pos == rhs.pos; }
             bool operator!=(const self_type& rhs) { return pos != rhs.pos; }
@@ -136,7 +140,7 @@ public:
 
         iterator begin() { return iterator(first); }
         iterator end() { return iterator(last); }
-        long size() { return (last - first) / NODELETS(); }
+        long size() const { return (last - first) / NODELETS(); }
     };
 
     subarray
@@ -145,6 +149,15 @@ public:
         assert(i < offsets.size() - NODELETS());
         T* first = &items[offsets[i]];
         T* last = &items[offsets[i + NODELETS()]];
+        return subarray(first, last);
+    }
+
+    subarray
+    operator[] (long i) const
+    {
+        assert(i < offsets.size() - NODELETS());
+        const T* first = &items[offsets[i]];
+        const T* last = &items[offsets[i + NODELETS()]];
         return subarray(first, last);
     }
     // TODO const index operator
