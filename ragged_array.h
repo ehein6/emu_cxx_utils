@@ -82,19 +82,11 @@ public:
 
     typedef T value_type;
 
-// TODO why doesn't this constructor work?
-//    // Construct a ragged array from a list of bucket sizes
-//    ragged_array(const striped_array<long> & sizes)
-//    : offsets(compute_offsets(sizes))
-//    , items(longest_chunk(offsets) - (NODELETS() - 1))
-//    {
-//    }
-
     // Construct a ragged array from a list of bucket sizes
     ragged_array(const striped_array<long> & sizes)
+    : offsets(compute_offsets(sizes))
+    , items(longest_chunk(offsets) - (NODELETS() - 1))
     {
-        offsets = compute_offsets(sizes);
-        items = striped_array<long>(longest_chunk(offsets) - (NODELETS() - 1));
     }
 
     template<bool is_const>
