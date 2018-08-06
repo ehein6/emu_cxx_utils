@@ -107,8 +107,7 @@ public:
     public:
         subarray_base(pointer first, pointer last) : first(first), last(last) {}
 
-        template<bool is_not_const=!is_const>
-        typename std::enable_if<is_not_const, T&>::type
+        T&
         operator[] (long i)
         {
             pointer ptr = first + i * NODELETS();
@@ -148,16 +147,18 @@ public:
         typedef iterator_base<false> iterator;
         typedef iterator_base<true> const_iterator;
 
-        iterator_base<is_const> begin() { return iterator_base<is_const>(first); }
-        iterator_base<is_const> end() { return iterator_base<is_const>(last); }
-        const_iterator cbegin() { return const_iterator(first); }
-        const_iterator cend() { return const_iterator(last); }
+        iterator begin() { return iterator(first); }
+        iterator end() { return iterator(last); }
+        const_iterator begin() const { return const_iterator(first); }
+        const_iterator end() const { return const_iterator(last); }
+        const_iterator cbegin() const { return const_iterator(first); }
+        const_iterator cend() const { return const_iterator(last); }
 
         long size() const { return (last - first) / NODELETS(); }
     };
 
     typedef subarray_base<false> subarray;
-    typedef subarray_base<true> const_subarray;
+    typedef subarray_base<true> const const_subarray;
 
     subarray
     operator[] (long i)
@@ -202,6 +203,8 @@ public:
 
     iterator begin() { return iterator(*this, 0); }
     iterator end() { return iterator(*this, offsets.size()-NODELETS()); }
+    const_iterator begin() const { return const_iterator(*this, 0); }
+    const_iterator end() const { return const_iterator(*this, offsets.size()-NODELETS()); }
     const_iterator cbegin() const { return const_iterator(*this, 0); }
     const_iterator cend() const { return const_iterator(*this, offsets.size()-NODELETS()); }
 
