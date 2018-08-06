@@ -97,51 +97,80 @@ public:
         items = striped_array<long>(longest_chunk(offsets) - (NODELETS() - 1));
     }
 
-    class subarray {
-    private:
-        T* first;
-        T* last;
-    public:
-        subarray(T * first, T * last) : first(first), last(last) {}
+    template <bool flag, class IsTrue, class IsFalse>
+    struct choose;
 
-        T& operator[] (long i)
+    template <class IsTrue, class IsFalse>
+    struct choose<true, IsTrue, IsFalse> {
+        typedef IsTrue type;
+    };
+
+    template <class IsTrue, class IsFalse>
+    struct choose<false, IsTrue, IsFalse> {
+        typedef IsFalse type;
+    };
+
+    template<bool is_const>
+    class subarray_base {
+    private:
+        typedef typename choose<is_const, const T*, T*>::type pointer;
+
+        pointer first;
+        pointer last;
+    public:
+        subarray_base(pointer first, pointer last) : first(first), last(last) {}
+
+        template<bool is_not_const=!is_const>
+        typename std::enable_if<is_not_const, T&>::type
+        operator[] (long i)
         {
-            T* ptr = first + i * NODELETS();
+            pointer ptr = first + i * NODELETS();
             assert(ptr < last);
             return *ptr;
         }
 
-        const T& operator[] (long i) const
+        const T&
+        operator[] (long i) const
         {
             const T* ptr = first + i * NODELETS();
             assert(ptr < last);
             return *ptr;
         }
 
-        class iterator {
+        template<bool is_const_iterator>
+        class iterator_base {
         public:
-            typedef iterator self_type;
+            typedef iterator_base self_type;
             typedef std::forward_iterator_tag iterator_category;
-            typedef T value_type;
+            typedef typename choose<is_const_iterator, const T, T>::type value_type;
             typedef ptrdiff_t difference_type;
-            typedef T* pointer;
-            typedef T& reference;
-            iterator(T * pos) : pos(pos) {}
+            typedef typename choose<is_const_iterator, const T*, T*>::type pointer;
+            typedef typename choose<is_const_iterator, const T&, T&>::type reference;
+            iterator_base(pointer pos) : pos(pos) {}
             self_type operator++() { pos += NODELETS(); return *this; }
             reference operator*() { return *pos; }
             pointer operator->() { return pos; }
             operator pointer() { return pos; }
 
-            bool operator==(const self_type& rhs) { return pos == rhs.pos; }
-            bool operator!=(const self_type& rhs) { return pos != rhs.pos; }
+            bool operator==(const self_type& rhs) const { return pos == rhs.pos; }
+            bool operator!=(const self_type& rhs) const { return pos != rhs.pos; }
         private:
             pointer pos;
         };
 
-        iterator begin() { return iterator(first); }
-        iterator end() { return iterator(last); }
+        typedef iterator_base<false> iterator;
+        typedef iterator_base<true> const_iterator;
+
+        iterator_base<is_const> begin() { return iterator_base<is_const>(first); }
+        iterator_base<is_const> end() { return iterator_base<is_const>(last); }
+        const_iterator cbegin() { return const_iterator(first); }
+        const_iterator cend() { return const_iterator(last); }
+
         long size() const { return (last - first) / NODELETS(); }
     };
+
+    typedef subarray_base<false> subarray;
+    typedef subarray_base<true> const_subarray;
 
     subarray
     operator[] (long i)
@@ -152,36 +181,42 @@ public:
         return subarray(first, last);
     }
 
-    subarray
+    const_subarray
     operator[] (long i) const
     {
         assert(i < offsets.size() - NODELETS());
         const T* first = &items[offsets[i]];
         const T* last = &items[offsets[i + NODELETS()]];
-        return subarray(first, last);
+        return const_subarray(first, last);
     }
-    // TODO const index operator
 
-    class iterator {
+    template<bool is_const>
+    class iterator_base {
     public:
-        typedef iterator self_type;
+        typedef iterator_base self_type;
         typedef std::random_access_iterator_tag iterator_category;
-        typedef subarray value_type;
+        typedef subarray_base<is_const> value_type;
         typedef long difference_type;
         typedef long pointer;
-        typedef subarray reference;
-        iterator(ragged_array& array, long pos) : array(array), pos(pos) {}
+        typedef subarray_base<is_const> reference;
+        typedef choose<is_const, const ragged_array&, ragged_array&> container_reference;
+        iterator_base(container_reference array, long pos) : array(array), pos(pos) {}
         self_type operator++() { ++pos; return *this; }
         reference operator*() { return array[pos]; }
-        bool operator==(const self_type& rhs) { return pos == rhs.pos; }
-        bool operator!=(const self_type& rhs) { return pos != rhs.pos; }
+        bool operator==(const self_type& rhs) const { return pos == rhs.pos; }
+        bool operator!=(const self_type& rhs) const { return pos != rhs.pos; }
     private:
-        ragged_array& array;
+        container_reference array;
         pointer pos;
     };
 
+    typedef iterator_base<false> iterator;
+    typedef iterator_base<true> const_iterator;
+
     iterator begin() { return iterator(*this, 0); }
     iterator end() { return iterator(*this, offsets.size()-NODELETS()); }
+    const_iterator cbegin() const { return const_iterator(*this, 0); }
+    const_iterator cend() const { return const_iterator(*this, offsets.size()-NODELETS()); }
 
     // Debug, print out internal structures to stdout
     void dump() {
