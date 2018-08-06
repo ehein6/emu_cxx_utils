@@ -52,9 +52,12 @@ public:
     }
 
     typedef T* iterator;
+    typedef const T* const_iterator;
+
     iterator begin ()               { return ptr; }
     iterator end ()                 { return ptr + n; }
-    typedef const T* const_iterator;
+    const_iterator begin () const   { return ptr; }
+    const_iterator end () const     { return ptr + n; }
     const_iterator cbegin () const  { return ptr; }
     const_iterator cend () const    { return ptr + n; }
 
