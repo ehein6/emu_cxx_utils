@@ -97,23 +97,10 @@ public:
         items = striped_array<long>(longest_chunk(offsets) - (NODELETS() - 1));
     }
 
-    template <bool flag, class IsTrue, class IsFalse>
-    struct choose;
-
-    template <class IsTrue, class IsFalse>
-    struct choose<true, IsTrue, IsFalse> {
-        typedef IsTrue type;
-    };
-
-    template <class IsTrue, class IsFalse>
-    struct choose<false, IsTrue, IsFalse> {
-        typedef IsFalse type;
-    };
-
     template<bool is_const>
     class subarray_base {
     private:
-        typedef typename choose<is_const, const T*, T*>::type pointer;
+        typedef typename std::conditional<is_const, const T*, T*>::type pointer;
 
         pointer first;
         pointer last;
@@ -142,10 +129,10 @@ public:
         public:
             typedef iterator_base self_type;
             typedef std::forward_iterator_tag iterator_category;
-            typedef typename choose<is_const_iterator, const T, T>::type value_type;
+            typedef typename std::conditional<is_const_iterator, const T, T>::type value_type;
             typedef ptrdiff_t difference_type;
-            typedef typename choose<is_const_iterator, const T*, T*>::type pointer;
-            typedef typename choose<is_const_iterator, const T&, T&>::type reference;
+            typedef typename std::conditional<is_const_iterator, const T*, T*>::type pointer;
+            typedef typename std::conditional<is_const_iterator, const T&, T&>::type reference;
             iterator_base(pointer pos) : pos(pos) {}
             self_type operator++() { pos += NODELETS(); return *this; }
             reference operator*() { return *pos; }
@@ -199,7 +186,7 @@ public:
         typedef long difference_type;
         typedef long pointer;
         typedef subarray_base<is_const> reference;
-        typedef choose<is_const, const ragged_array&, ragged_array&> container_reference;
+        typedef std::conditional<is_const, const ragged_array&, ragged_array&> container_reference;
         iterator_base(container_reference array, long pos) : array(array), pos(pos) {}
         self_type operator++() { ++pos; return *this; }
         reference operator*() { return array[pos]; }
