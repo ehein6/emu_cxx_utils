@@ -16,7 +16,7 @@ ptr_from_iter(Iterator iter);
 
 // Raw pointer: this is the base case, return the pointer
 template<class T>
-void *
+const void *
 ptr_from_iter(T* ptr)
 {
     return ptr;
