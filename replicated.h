@@ -295,6 +295,7 @@ public:
     }
 
     T& get() { return val; }
+    const T& get() const { return val; }
 
     // Initializes all copies to the same value
     repl&
