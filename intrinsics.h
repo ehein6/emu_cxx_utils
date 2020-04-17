@@ -12,6 +12,14 @@ atomic_addms(volatile long * ptr, long value)
     return ATOMIC_ADDMS(ptr, value);
 }
 
+inline unsigned long
+atomic_addms(volatile unsigned long * ptr, unsigned long value)
+{
+    return ATOMIC_ADDMS(
+        reinterpret_cast<volatile long*>(ptr),
+        static_cast<long>(value));
+}
+
 // Increment pointer
 template<class T>
 inline T*
@@ -56,13 +64,23 @@ atomic_cas(T volatile * ptr, T oldval, T newval)
     return retval_p.t;
 }
 
-
-// Remote add on 64-bit int
+// Remote add on signed 64-bit int
 inline void
 remote_add(volatile long * ptr, long value)
 {
     return REMOTE_ADD(ptr, value);
 }
+
+// Remote add on unsigned 64-bit int
+// The memoryweb definitions take signed type, so we need to cast
+inline void
+remote_add(volatile unsigned long * ptr, unsigned long value)
+{
+    return REMOTE_ADD(
+        reinterpret_cast<volatile long*>(ptr),
+        static_cast<long>(value));
+}
+
 // Remote add on pointer
 template<class T>
 inline T*
@@ -72,7 +90,7 @@ remote_add(T * volatile * ptr, ptrdiff_t value)
     REMOTE_ADD((volatile long*)ptr, (long)value);
 }
 // Remote bitwise ops only make sense for unsigned types
-// The memoryweb definitions take signed type, so we need to case
+// The memoryweb definitions take signed type, so we need to cast
 inline void
 remote_and(volatile unsigned long * ptr, unsigned long value) {
     return REMOTE_AND(
