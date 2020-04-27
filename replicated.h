@@ -74,21 +74,38 @@ void repl_for_each(
 
 } // end namespace detail
 
+/**
+ * Map a function onto each copy of a replicated variable.
+ *
+ * @param policy Parallel execution policy
+ * @param repl_ref Reference to replicated variable
+ * @param worker Worker function with the signature
+ *        @code void worker(T& ref) @endcode
+ */
 template<class Policy, class T, class Function,
     // Disable if first argument is not an execution policy
     std::enable_if_t<is_execution_policy_v<Policy>, int> = 0
 >
 void repl_for_each(Policy policy, T & repl_ref, Function worker)
 {
-    assert(emu::pmanip::is_repl(&repl_ref));
-    detail::repl_for_each(policy, 0, NODELETS(), repl_ref, worker);
+    if (emu::pmanip::is_repl(&repl_ref)) {
+        detail::repl_for_each(policy, 0, NODELETS(), repl_ref, worker);
+    } else {
+        worker(repl_ref);
+    }
 }
 
+/**
+ * Map a function onto each copy of a replicated variable.
+ *
+ * @param repl_ref Reference to replicated variable
+ * @param worker Worker function with the signature
+ *        @code void worker(T& ref) @endcode
+ */
 template<class T, class Function>
 void repl_for_each(T & repl_ref, Function worker)
 {
-    assert(emu::pmanip::is_repl(&repl_ref));
-    detail::repl_for_each(seq, 0, NODELETS(), repl_ref, worker);
+    repl_for_each(seq, repl_ref, worker);
 }
 
 /**
@@ -300,9 +317,12 @@ public:
     repl&
     operator=(const T& rhs)
     {
-        assert(emu::pmanip::is_repl(this));
-        for (long i = 0; i < NODELETS(); ++i) {
-            get_nth(i) = rhs;
+        if (emu::pmanip::is_repl(this)) {
+            for (long i = 0; i < NODELETS(); ++i) {
+                get_nth(i) = rhs;
+            }
+        } else {
+            val = rhs;
         }
         return *this;
     }
@@ -378,9 +398,20 @@ public:
 
 // TODO implement repl_iterator, then this can be merged with regular reduce()
 // TODO missing impl for repl_shallow and repl_deep
+
+
+/**
+ * Combine all copies of a replicated variable together
+ * @param ref Reference to replicated variable to be reduced
+ * @param reduce A binary operator with the signature
+ *        @code T reduce(T& lhs, T& rhs) @endcode
+ * @return Result of
+ *         @code reduce(ref.get_nth(0), reduce(ref.get_nth(1), ... @endcode
+ */
 template<typename T, typename F>
 T repl_reduce(repl<T>& ref, F reduce)
 {
+    if (!emu::pmanip::is_repl(&ref)) { return ref; }
     T value = ref.get_nth(0);
     for (long nlet = 1; nlet < NODELETS(); ++nlet) {
         value = reduce(value, ref.get_nth(nlet));
@@ -388,10 +419,18 @@ T repl_reduce(repl<T>& ref, F reduce)
     return value;
 }
 
+/**
+ * Combine all copies of a replicated variable together
+ * @param ref Reference to replicated variable to be reduced
+ * @param reduce A binary operator with the signature
+ *        @code T reduce(T& lhs, T& rhs) @endcode
+ * @return Result of
+ *         @code reduce(ref.get_nth(0), reduce(ref.get_nth(1), ... @endcode
+ */
 template<typename T, typename F>
 T repl_reduce(T& ref, F reduce)
 {
-    assert(emu::pmanip::is_repl(&ref));
+    if (!emu::pmanip::is_repl(&ref)) { return ref; }
     T value = emu::pmanip::get_nth(&ref, 0);
     for (long nlet = 1; nlet < NODELETS(); ++nlet) {
         value = reduce(value, emu::pmanip::get_nth(&ref, nlet));
