@@ -239,14 +239,14 @@ template<class Iterator1, class Iterator2>
 zip2_iterator<Iterator1, Iterator2>
 make_zip_iterator(Iterator1 iter1, Iterator2 iter2)
 {
-    return zip2_iterator(iter1, iter2);
+    return zip2_iterator<Iterator1, Iterator2>(iter1, iter2);
 }
 
 template<class Iterator1, class Iterator2, class Iterator3>
 zip3_iterator<Iterator1, Iterator2, Iterator3>
 make_zip_iterator(Iterator1 iter1, Iterator2 iter2, Iterator3 iter3)
 {
-    return zip3_iterator(iter1, iter2, iter3);
+    return zip3_iterator<Iterator1, Iterator2, Iterator3>(iter1, iter2, iter3);
 }
 
 
