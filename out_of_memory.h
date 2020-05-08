@@ -1,5 +1,6 @@
 #pragma once
 #include <cstdio>
+#include <cstdlib>
 
 #define EMU_OUT_OF_MEMORY(BYTES) emu::out_of_memory(__PRETTY_FUNCTION__, BYTES)
 
@@ -18,7 +19,7 @@ out_of_memory(const char* function_name, size_t bytes)
     printf("Failed to allocate %li bytes in %s, exiting\n",
         bytes, function_name);
     fflush(stdout);
-    std::terminate();
+    std::abort();
 }
 
 } // end namespace emu
