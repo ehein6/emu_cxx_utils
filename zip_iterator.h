@@ -20,13 +20,17 @@ namespace emu {
 
 // Keeping it simple for now. Eventually we should allow an arbitrary tuple of
 // iterators, but this greatly increases the complexity of the code!
+// Make it look like we implemented zip_iterator using a variadic template
+template<class... Args>
+class zip_iterator;
+
 
 template<class Iter1, class Iter2>
-class zip2_iterator
+class zip_iterator<Iter1, Iter2>
 {
 public:
     // Standard iterator typedefs for interop with C++ algorithms
-    using self_type = zip2_iterator;
+    using self_type = zip_iterator;
     // FIXME think hard about these
     using iterator_category = typename std::iterator_traits<Iter1>::iterator_category;
     using value_type = std::tuple<
@@ -47,7 +51,7 @@ private:
     Iter2 iter2_;
 public:
 
-    explicit zip2_iterator(Iter1 iter1, Iter2 iter2)
+    explicit zip_iterator(Iter1 iter1, Iter2 iter2)
         : iter1_(iter1)
         , iter2_(iter2)
     {}
@@ -125,11 +129,11 @@ public:
 };
 
 template<class Iter1, class Iter2, class Iter3>
-class zip3_iterator
+class zip_iterator<Iter1, Iter2, Iter3>
 {
 public:
     // Standard iterator typedefs for interop with C++ algorithms
-    using self_type = zip3_iterator;
+    using self_type = zip_iterator;
     // FIXME think hard about these
     using iterator_category = typename std::iterator_traits<Iter1>::iterator_category;
     using value_type = std::tuple<
@@ -154,7 +158,7 @@ private:
     Iter3 iter3_;
 public:
 
-    explicit zip3_iterator(Iter1 iter1, Iter2 iter2, Iter3 iter3)
+    explicit zip_iterator(Iter1 iter1, Iter2 iter2, Iter3 iter3)
         : iter1_(iter1)
         , iter2_(iter2)
         , iter3_(iter3)
@@ -234,21 +238,21 @@ public:
     // TODO Provide overloads for atomic increment
 };
 
+// Convenience functions for creating a zip iterator
 
 template<class Iterator1, class Iterator2>
-zip2_iterator<Iterator1, Iterator2>
+zip_iterator<Iterator1, Iterator2>
 make_zip_iterator(Iterator1 iter1, Iterator2 iter2)
 {
-    return zip2_iterator<Iterator1, Iterator2>(iter1, iter2);
+    return zip_iterator<Iterator1, Iterator2>(iter1, iter2);
 }
 
 template<class Iterator1, class Iterator2, class Iterator3>
-zip3_iterator<Iterator1, Iterator2, Iterator3>
+zip_iterator<Iterator1, Iterator2, Iterator3>
 make_zip_iterator(Iterator1 iter1, Iterator2 iter2, Iterator3 iter3)
 {
-    return zip3_iterator<Iterator1, Iterator2, Iterator3>(iter1, iter2, iter3);
+    return zip_iterator<Iterator1, Iterator2, Iterator3>(iter1, iter2, iter3);
 }
 
 
 } // end namespace emu
-
