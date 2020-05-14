@@ -332,6 +332,9 @@ public:
     template<typename U = T>
     typename std::enable_if<std::is_pointer<U>::value, U>::type
     operator->() { return val; }
+    template<typename U = T>
+    typename std::enable_if<std::is_pointer<U>::value, U>::type
+    operator->() const { return val; }
 };
 
 /**
