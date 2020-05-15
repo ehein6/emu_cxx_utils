@@ -83,7 +83,7 @@ remote_add(volatile unsigned long * ptr, unsigned long value)
 
 // Remote add on pointer
 template<class T>
-inline T*
+inline void
 remote_add(T * volatile * ptr, ptrdiff_t value)
 {
     value *= sizeof(T);
