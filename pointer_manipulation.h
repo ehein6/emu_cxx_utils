@@ -112,7 +112,7 @@ T * get_nth(T * repladdr, long n)
  * @return repladdr that has the same view/nlet number as otheraddr.
  */
 template <class T>
-T * get_localto(T * repladdr, void * otheraddr)
+T * get_localto(T * repladdr, void const * otheraddr)
 {
     if (is_repl(otheraddr)) {
         return repladdr;
