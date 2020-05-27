@@ -283,6 +283,22 @@ public:
         return *pmanip::get_nth(&val, n);
     }
 
+    T const& get_nth(long n) const
+    {
+        assert(n < NODELETS());
+        return *pmanip::get_nth(&val, n);
+    }
+
+    T& get_localto(void const* other)
+    {
+        return *pmanip::get_localto(&val, other);
+    }
+
+    T const& get_localto(void const* other) const
+    {
+        return *pmanip::get_localto(&val, other);
+    }
+
     // Default constructor
     repl<T>() = default;
 
