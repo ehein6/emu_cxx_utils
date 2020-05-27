@@ -22,12 +22,20 @@ private:
     repl<T*> ptr_;
     repl<long> n_;
 
-    T* allocate(long size)
+    T* allocate_storage(long size)
     {
         auto ptr = reinterpret_cast<T*>(
             mw_malloc1dlong(static_cast<size_t>(size)));
         if (!ptr) { EMU_OUT_OF_MEMORY(size * sizeof(long)); }
         return ptr;
+    }
+
+    void free_storage()
+    {
+        if (ptr_) {
+            mw_free(ptr_);
+            ptr_ = nullptr;
+        }
     }
 
 public:
@@ -61,7 +69,7 @@ public:
      * @param n Number of elements
      */
     explicit striped_array(long n)
-        : ptr_(allocate(n))
+        : ptr_(allocate_storage(n))
         , n_(n)
     {}
 
@@ -74,7 +82,7 @@ public:
     // Destructor
     ~striped_array()
     {
-        if (ptr_) { mw_free((void*)ptr_); }
+        free_storage();
     }
 
     // Swap overload
@@ -87,7 +95,7 @@ public:
 
     // Copy constructor
     striped_array(const self_type & other)
-        : ptr_(allocate(other.n_))
+        : ptr_(allocate_storage(other.n_))
         , n_(other.n_)
     {
         // TODO upgrade to emu::parallel::copy
@@ -126,19 +134,25 @@ public:
         // Do we need to reallocate?
         if (new_size > n_) {
             // Allocate new array
-            auto new_ptr = allocate(new_size);
+            auto new_ptr = allocate_storage(new_size);
             if (ptr_) {
                 // Copy elements over into new array
                 // TODO upgrade to emu::parallel::copy
                 memcpy(new_ptr, ptr_, (size_t)(n_ * sizeof(T)));
                 // Deallocate old array
-                mw_free(ptr_);
+                free_storage();
             }
             // Save new pointer
             ptr_ = new_ptr;
         }
         // Update size
         n_ = new_size;
+    }
+
+    void clear()
+    {
+        free_storage();
+        n_ = 0;
     }
 };
 

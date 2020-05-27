@@ -14,11 +14,19 @@ private:
     repl<T *> data_;
     repl<long> size_;
 
-    T* allocate(long size)
+    T* allocate_storage(long size)
     {
         T* ptr = reinterpret_cast<T *>(mw_mallocrepl(sizeof(T) * size));
         if (!ptr) { EMU_OUT_OF_MEMORY(sizeof(T) * size * NODELETS()); }
         return ptr;
+    }
+
+    void free_storage()
+    {
+        if (data_) {
+            mw_free(data_);
+            data_ = nullptr;
+        }
     }
 
 public:
@@ -30,7 +38,7 @@ public:
 
     // Constructor : create a repl_array with `size` elements on each nodelet
     explicit repl_array(long size)
-        : data_(allocate(size))
+        : data_(allocate_storage(size))
         , size_(size)
     {}
 
@@ -41,12 +49,12 @@ public:
 
     // Destructor
     ~repl_array() {
-        if (data_) { mw_free(data_); }
+        free_storage();
     }
 
     // Copy constructor
     repl_array(const repl_array &other)
-        : data_(allocate(other.size_))
+        : data_(allocate_storage(other.size_))
         , size_(other.size_)
     {
         // TODO upgrade to emu::parallel::copy
@@ -103,7 +111,7 @@ public:
     {
         if (new_size > size_) {
             // Allocate new array
-            auto new_ptr = allocate(new_size);
+            auto new_ptr = allocate_storage(new_size);
             if (data_) {
                 // TODO upgrade to emu::parallel::copy
                 for(long nlet = 0; nlet < NODELETS(); ++nlet) {
@@ -114,7 +122,7 @@ public:
                     );
                 }
                 // Deallocate old array
-                mw_free(data_);
+                free_storage();
             }
             // Save new pointer
             data_ = new_ptr;
@@ -122,6 +130,13 @@ public:
         // Update the size
         size_ = new_size;
     }
+
+    void clear()
+    {
+        free_storage();
+        size_ = 0;
+    }
+
 };
 
 } // end namespace emu
