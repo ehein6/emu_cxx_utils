@@ -88,19 +88,19 @@ public:
     }
 
     T *get_nth(long n) {
-        return data_.get_nth(n);
+        return emu::pmanip::get_nth(data_.get(), n);
     }
 
     const T *get_nth(long n) const {
-        return data_.get_nth(n);
+        return emu::pmanip::get_nth(data_.get(), n);
     }
 
     T * get_localto(void const* other) {
-        return data_.get_localto(other);
+        return emu::pmanip::get_localto(data_.get(), other);
     }
 
     const T * get_localto(void const * other) const {
-        return data_.get_localto(other);
+        return emu::pmanip::get_localto(data_.get(), other);
     }
 
     const T* data() const { return data_; }
