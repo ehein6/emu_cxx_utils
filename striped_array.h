@@ -16,9 +16,11 @@ template<typename T>
 class striped_array
 {
     static_assert(sizeof(T) == 8, "emu_striped_array can only hold 64-bit data types");
+    using self_type = striped_array;
+
 private:
-    repl<long> n_;
     repl<T*> ptr_;
+    repl<long> n_;
 
     T* allocate(long size)
     {
@@ -29,22 +31,9 @@ private:
     }
 
 public:
-    typedef T value_type;
-
-    // Default constructor
-    striped_array() : n_(0), ptr_(nullptr) {};
-
-    /**
-     * Constructs a emu_striped_array<T>
-     * @param n Number of elements
-     */
-    explicit striped_array(long n)
-    : n_(n)
-    , ptr_(allocate(n))
-    {}
-
-    typedef T* iterator;
-    typedef const T* const_iterator;
+    using value_type = T;
+    using iterator = T*;
+    using const_iterator = T const*;
 
     iterator begin ()               { return ptr_; }
     iterator end ()                 { return ptr_ + n_; }
@@ -61,39 +50,62 @@ public:
     T& back()               { return ptr_[n_ - 1]; }
     const T& back() const   { return ptr_[n_ - 1]; }
 
+    // Default constructor
+    striped_array()
+        : ptr_(nullptr)
+        , n_(0)
+    {}
+
+    /**
+     * Constructs a emu_striped_array<T>
+     * @param n Number of elements
+     */
+    explicit striped_array(long n)
+        : ptr_(allocate(n))
+        , n_(n)
+    {}
+
+    // Shallow copy constructor (used for repl<T>)
+    striped_array(const self_type& other, shallow_copy)
+        : ptr_(other.ptr_)
+        , n_(other.n_)
+    {}
+
     // Destructor
     ~striped_array()
     {
         if (ptr_) { mw_free((void*)ptr_); }
     }
 
+    // Swap overload
     friend void
-    swap(striped_array& first, striped_array& second)
+    swap(self_type& first, self_type& second)
     {
-        using std::swap;
-        swap(first.n_, second.n_);
-        swap(first.ptr_, second.ptr_);
+        repl_swap(first.n_, second.n_);
+        repl_swap(first.ptr_, second.ptr_);
     }
 
     // Copy constructor
-    striped_array(const striped_array & other) = delete;
+    striped_array(const self_type & other)
+        : ptr_(allocate(other.n_))
+        , n_(other.n_)
+    {
+        // TODO upgrade to emu::parallel::copy
+        memcpy(ptr_, other.ptr_, (size_t)(n_ * sizeof(T)));
+    }
 
     // Assignment operator (using copy-and-swap idiom)
-    striped_array& operator= (striped_array other)
+    self_type& operator= (self_type other)
     {
         swap(*this, other);
         return *this;
     }
 
     // Move constructor (using copy-and-swap idiom)
-    striped_array(striped_array&& other) noexcept : striped_array()
+    striped_array(self_type&& other) noexcept : striped_array()
     {
         swap(*this, other);
     }
-
-    // Shallow copy constructor (used for repl<T>)
-    striped_array(const striped_array& other, shallow_copy)
-    : n_(other.n_), ptr_(other.ptr_) {}
 
     T&
     operator[] (long i)
@@ -117,7 +129,8 @@ public:
             auto new_ptr = allocate(new_size);
             if (ptr_) {
                 // Copy elements over into new array
-//                emu::parallel::copy(ptr_, ptr_ + n_, new_ptr);
+                // TODO upgrade to emu::parallel::copy
+                memcpy(new_ptr, ptr_, (size_t)(n_ * sizeof(T)));
                 // Deallocate old array
                 mw_free(ptr_);
             }
