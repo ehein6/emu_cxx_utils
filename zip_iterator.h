@@ -125,8 +125,12 @@ public:
         return lhs.iter1_ - rhs.iter1_;
     }
 
+    template<size_t I, class I1, class I2>
+    friend auto std::get(emu::zip_iterator<I1, I2>& self);
+
     // TODO Provide overloads for atomic increment
 };
+
 
 template<class Iter1, class Iter2, class Iter3>
 class zip_iterator<Iter1, Iter2, Iter3>
@@ -235,6 +239,9 @@ public:
         return lhs.iter1_ - rhs.iter1_;
     }
 
+    template<size_t I, class I1, class I2, class I3>
+    friend auto std::get(emu::zip_iterator<I1, I2, I3>& self);
+
     // TODO Provide overloads for atomic increment
 };
 
@@ -256,3 +263,27 @@ make_zip_iterator(Iterator1 iter1, Iterator2 iter2, Iterator3 iter3)
 
 
 } // end namespace emu
+
+
+// Specializations of std::get, so we can fetch the stored iterators
+// as if this were a tuple
+namespace std {
+
+template<size_t I, class Iter1, class Iter2>
+auto get(emu::zip_iterator<Iter1, Iter2>& self)
+{
+    static_assert(I < 2);
+    if constexpr (I == 0) { return self.iter1_; }
+    if constexpr (I == 1) { return self.iter2_; }
+}
+
+template<size_t I, class Iter1, class Iter2, class Iter3>
+auto get(emu::zip_iterator<Iter1, Iter2, Iter3>& self)
+{
+    static_assert(I < 3);
+    if constexpr (I == 0) { return self.iter1_; }
+    if constexpr (I == 1) { return self.iter2_; }
+    if constexpr (I == 2) { return self.iter3_; }
+}
+
+} // end namespace std
