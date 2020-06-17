@@ -217,6 +217,16 @@ public:
         return *emu::pmanip::get_nth(this, n);
     }
 
+    T& get_localto(void const* hint)
+    {
+        return *emu::pmanip::get_localto(this, hint);
+    }
+
+    const T& get_localto(void const* hint) const
+    {
+        return *emu::pmanip::get_localto(this, hint);
+    }
+
     // Wrapper constructor to copy T to each nodelet after running the requested constructor
     template<typename... Args>
     explicit repl_shallow (Args&&... args)
@@ -374,12 +384,28 @@ public:
     /**
      * Returns a reference to the copy of T on the Nth nodelet
      * @param n nodelet ID
-     * @return Returns a reference to the copy of T on the Nth nodelet
+     * @return Reference the copy of T on the Nth nodelet
      */
     T& get_nth(long n)
     {
         assert(n < NODELETS());
         return *emu::pmanip::get_nth(this, n);
+    }
+
+    const T& get_nth(long n) const
+    {
+        assert(n < NODELETS());
+        return *emu::pmanip::get_nth(this, n);
+    }
+
+    T& get_localto(void const* hint)
+    {
+        return *emu::pmanip::get_localto(this, hint);
+    }
+
+    const T& get_localto(void const* hint) const
+    {
+        return *emu::pmanip::get_localto(this, hint);
     }
 
     // Constructor template - allows repl_deep<T> to be constructed just like a T
