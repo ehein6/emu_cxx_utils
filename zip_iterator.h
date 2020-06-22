@@ -24,6 +24,57 @@ namespace emu {
 template<class... Args>
 class zip_iterator;
 
+// Custom wrapper around tuple of iterators
+// emu::zip_iterator uses this instead of std::tuple in order to fix a subtle
+// bug:
+//
+// Dereferencing a single iterator returns a reference. Algorithms like
+// std::sort will call swap() on two references to move the pointed-to
+// elements around.
+//
+// Dereferencing an emu::zip_iterator yields a tuple of references. This tuple
+// is a temporary value, so functions that accept "reference to tuple"
+// can't be used. Thus std::sort fails to compile when it tries to call
+// swap() on two arguments of type emu::zip_iterator::reference.
+//
+// Passing a tuple-of-references by value is essentially the same as passing
+// multiple arguments by reference. We still want to swap the pointed-to values,
+// not the tuples themselves.
+//
+// So this class behaves exactly like std::tuple, except we overload
+// swap, comparison, and assignment to accept arguments by value
+// instead of by reference.
+
+template<class... Args>
+struct iterator_tuple : public std::tuple<Args...> // Inherit from std::tuple
+{
+    using std::tuple<Args...>::tuple; // Inherit constructors
+    using self_type = iterator_tuple;
+
+    // Cast back to the underlying tuple
+    std::tuple<Args...> as_tuple() { return static_cast<std::tuple<Args...>>(*this); }
+
+    // Assign from tuple with different types
+    template< class... UTypes >
+    void operator=( iterator_tuple<UTypes...> rhs )
+    {
+        this->as_tuple() = rhs.as_tuple();
+    }
+
+    friend bool operator==(iterator_tuple lhs, iterator_tuple rhs) {
+        return lhs.as_tuple() == rhs.as_tuple();
+    }
+
+    friend bool operator<(iterator_tuple lhs, iterator_tuple rhs) {
+        return lhs.as_tuple() < rhs.as_tuple();
+    }
+
+    friend void swap(self_type lhs, self_type rhs) {
+        auto lhst = lhs.as_tuple();
+        auto rhst = rhs.as_tuple();
+        std::swap(lhst, rhst);
+    }
+};
 
 template<class Iter1, class Iter2>
 class zip_iterator<Iter1, Iter2>
@@ -31,18 +82,18 @@ class zip_iterator<Iter1, Iter2>
 public:
     // Standard iterator typedefs for interop with C++ algorithms
     using self_type = zip_iterator;
-    // FIXME think hard about these
+    // FIXME detect iterator category
     using iterator_category = typename std::iterator_traits<Iter1>::iterator_category;
-    using value_type = std::tuple<
+    using value_type = iterator_tuple<
         typename std::iterator_traits<Iter1>::value_type,
         typename std::iterator_traits<Iter2>::value_type
     >;
     using difference_type = typename std::iterator_traits<Iter1>::difference_type;
-    using pointer = std::tuple<
+    using pointer = iterator_tuple<
         typename std::iterator_traits<Iter1>::pointer,
         typename std::iterator_traits<Iter2>::pointer
     >;
-    using reference = std::tuple<
+    using reference = iterator_tuple<
         typename std::iterator_traits<Iter1>::reference,
         typename std::iterator_traits<Iter2>::reference
     >;
@@ -140,18 +191,18 @@ public:
     using self_type = zip_iterator;
     // FIXME think hard about these
     using iterator_category = typename std::iterator_traits<Iter1>::iterator_category;
-    using value_type = std::tuple<
+    using value_type = iterator_tuple<
         typename std::iterator_traits<Iter1>::value_type,
         typename std::iterator_traits<Iter2>::value_type,
         typename std::iterator_traits<Iter3>::value_type
     >;
     using difference_type = typename std::iterator_traits<Iter1>::difference_type;
-    using pointer = std::tuple<
+    using pointer = iterator_tuple<
         typename std::iterator_traits<Iter1>::pointer,
         typename std::iterator_traits<Iter2>::pointer,
         typename std::iterator_traits<Iter3>::pointer
     >;
-    using reference = std::tuple<
+    using reference = iterator_tuple<
         typename std::iterator_traits<Iter1>::reference,
         typename std::iterator_traits<Iter2>::reference,
         typename std::iterator_traits<Iter3>::reference
@@ -284,6 +335,11 @@ auto get(emu::zip_iterator<Iter1, Iter2, Iter3>& self)
     if constexpr (I == 0) { return self.iter1_; }
     if constexpr (I == 1) { return self.iter2_; }
     if constexpr (I == 2) { return self.iter3_; }
+}
+
+template<size_t N, typename ...Args>
+auto get(emu::iterator_tuple<Args...> t)->decltype(std::get<N>(t.data_)){
+    return std::get<N>(t.data_);
 }
 
 } // end namespace std
