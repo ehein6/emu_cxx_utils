@@ -102,7 +102,7 @@ private:
     Iter2 iter2_;
 public:
 
-    explicit zip_iterator(Iter1 iter1, Iter2 iter2)
+    zip_iterator(Iter1 iter1, Iter2 iter2)
         : iter1_(iter1)
         , iter2_(iter2)
     {}
@@ -213,7 +213,7 @@ private:
     Iter3 iter3_;
 public:
 
-    explicit zip_iterator(Iter1 iter1, Iter2 iter2, Iter3 iter3)
+    zip_iterator(Iter1 iter1, Iter2 iter2, Iter3 iter3)
         : iter1_(iter1)
         , iter2_(iter2)
         , iter3_(iter3)
