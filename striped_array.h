@@ -17,7 +17,6 @@ class striped_array
 {
     static_assert(sizeof(T) == 8, "emu_striped_array can only hold 64-bit data types");
     using self_type = striped_array;
-
 private:
     repl<T*> ptr_;
     repl<long> n_;
@@ -138,7 +137,7 @@ public:
             if (ptr_) {
                 // Copy elements over into new array
                 // TODO upgrade to emu::parallel::copy
-                memcpy(new_ptr, ptr_, (size_t)(n_ * sizeof(T)));
+                std::copy(new_ptr, new_ptr + n_, ptr_.get());
                 // Deallocate old array
                 free_storage();
             }
