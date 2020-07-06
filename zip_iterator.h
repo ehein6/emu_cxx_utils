@@ -102,6 +102,8 @@ private:
     Iter2 iter2_;
 public:
 
+    iterator_tuple<Iter1, Iter2> as_tuple() { return {iter1_, iter2_}; }
+
     zip_iterator(Iter1 iter1, Iter2 iter2)
         : iter1_(iter1)
         , iter2_(iter2)
@@ -213,6 +215,11 @@ private:
     Iter3 iter3_;
 public:
 
+    iterator_tuple<Iter1, Iter2, Iter3> as_tuple()
+    {
+        return {iter1_, iter2_, iter3_};
+    }
+
     zip_iterator(Iter1 iter1, Iter2 iter2, Iter3 iter3)
         : iter1_(iter1)
         , iter2_(iter2)
@@ -323,18 +330,13 @@ namespace std {
 template<size_t I, class Iter1, class Iter2>
 auto get(emu::zip_iterator<Iter1, Iter2>& self)
 {
-    static_assert(I < 2);
-    if constexpr (I == 0) { return self.iter1_; }
-    if constexpr (I == 1) { return self.iter2_; }
+    return std::get<I>(self.as_tuple());
 }
 
 template<size_t I, class Iter1, class Iter2, class Iter3>
 auto get(emu::zip_iterator<Iter1, Iter2, Iter3>& self)
 {
-    static_assert(I < 3);
-    if constexpr (I == 0) { return self.iter1_; }
-    if constexpr (I == 1) { return self.iter2_; }
-    if constexpr (I == 2) { return self.iter3_; }
+    return std::get<I>(self.as_tuple());
 }
 
 template<size_t N, typename ...Args>
